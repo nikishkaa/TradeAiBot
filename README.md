@@ -1,6 +1,6 @@
 # Простой Trading Bot для Telegram
 
-Простой Telegram бот, который анализирует криптовалюты с помощью ProxyAPI (GPT-3.5) и отправляет результаты каждый час.
+Простой Telegram бот, который анализирует криптовалюты с помощью ProxyAPI (GPT-3.5) и отправляет результаты каждую минуту.
 
 ## Установка
 
@@ -54,7 +54,7 @@ CRYPTO_IDS=bitcoin,ethereum,cardano
 ## Запуск
 
 ```bash
-python working_bot.py
+python trading_bot.py
 ```
 
 ## Что делает бот
