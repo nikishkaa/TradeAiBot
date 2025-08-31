@@ -3,6 +3,8 @@ import json
 import os
 import threading
 import time
+import logging
+from datetime import datetime
 from dotenv import load_dotenv
 from telegram import Bot, Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
@@ -14,6 +16,7 @@ load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 PROXYAPI_KEY = os.getenv("PROXYAPI_KEY")
 PROXYAPI_URL = os.getenv("PROXYAPI_URL")
+AI_MODEL = os.getenv("AI_MODEL", "gpt-3.5-turbo")
 CRYPTO_API_URL = os.getenv("CRYPTO_API_URL")
 CRYPTO_IDS = os.getenv("CRYPTO_IDS", "bitcoin,ethereum,cardano").split(",")
 
@@ -22,8 +25,25 @@ chat_id = None
 CHAT_ID_FILE = "chat_id.txt"  # Файл для сохранения Chat ID
 
 # Настройки бота
-ANALYSIS_INTERVAL_SECONDS = 3600  # 1 час = 3600 секунд
+ANALYSIS_INTERVAL_SECONDS = 20  # 1 час = 3600 секунд
 scheduler_running = False
+
+# Настройка логирования
+def setup_logging():
+    """Настраивает логирование"""
+    log_filename = f"trading_bot_{datetime.now().strftime('%Y%m%d')}.log"
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_filename, encoding='utf-8'),
+            logging.StreamHandler()
+        ]
+    )
+    return logging.getLogger(__name__)
+
+# Инициализируем логгер
+logger = setup_logging()
 
 def format_interval(seconds):
     """Форматирует интервал в читаемый вид"""
@@ -43,6 +63,8 @@ class TradingBot:
     def __init__(self):
         self.bot = Bot(token=TELEGRAM_TOKEN)
         self.app = Application.builder().token(TELEGRAM_TOKEN).build()
+        logger.info("🤖 Trading Bot инициализирован")
+        logger.info(f"🤖 Используется модель ИИ: {AI_MODEL}")
         self.load_chat_id()
     
     def load_chat_id(self):
@@ -52,8 +74,10 @@ class TradingBot:
             if os.path.exists(CHAT_ID_FILE):
                 with open(CHAT_ID_FILE, 'r') as f:
                     chat_id = f.read().strip()
+                    logger.info(f"📱 Загружен Chat ID: {chat_id}")
                     print(f"📱 Загружен Chat ID: {chat_id}")
         except Exception as e:
+            logger.error(f"Ошибка загрузки Chat ID: {e}")
             print(f"Ошибка загрузки Chat ID: {e}")
     
     def save_chat_id(self, chat_id_value):
@@ -61,8 +85,10 @@ class TradingBot:
         try:
             with open(CHAT_ID_FILE, 'w') as f:
                 f.write(str(chat_id_value))
+            logger.info(f"💾 Chat ID сохранен: {chat_id_value}")
             print(f"💾 Chat ID сохранен: {chat_id_value}")
         except Exception as e:
+            logger.error(f"Ошибка сохранения Chat ID: {e}")
             print(f"Ошибка сохранения Chat ID: {e}")
     
     def get_crypto_data(self):
@@ -73,10 +99,15 @@ class TradingBot:
                 'vs_currencies': 'usd',
                 'include_24hr_change': 'true'
             }
+            logger.info(f"📊 Запрашиваю данные для: {', '.join(CRYPTO_IDS)}")
             response = requests.get(CRYPTO_API_URL, params=params)
-            return response.json()
+            data = response.json()
+            logger.info("📊 Данные криптовалют получены успешно")
+            return data
         except Exception as e:
-            return f"Ошибка получения данных: {e}"
+            error_msg = f"Ошибка получения данных: {e}"
+            logger.error(error_msg)
+            return error_msg
     
     def analyze_with_proxyapi(self, data):
         """Анализирует данные с помощью ProxyAPI"""
@@ -94,23 +125,29 @@ class TradingBot:
             }
             
             payload = {
-                "model": "gpt-3.5-turbo",
+                "model": AI_MODEL,
                 "messages": [
                     {"role": "user", "content": prompt}
                 ],
                 "max_tokens": 200
             }
             
+            logger.info(f"🤖 Отправляю запрос к ИИ (модель: {AI_MODEL})")
             response = requests.post(PROXYAPI_URL, headers=headers, json=payload)
             result = response.json()
-            return result.get('choices', [{}])[0].get('message', {}).get('content', 'Ошибка анализа')
+            analysis = result.get('choices', [{}])[0].get('message', {}).get('content', 'Ошибка анализа')
+            logger.info("🤖 Анализ ИИ получен успешно")
+            return analysis
         except Exception as e:
-            return f"Ошибка анализа: {e}"
+            error_msg = f"Ошибка анализа: {e}"
+            logger.error(error_msg)
+            return error_msg
     
     def send_message_sync(self, text):
         """Отправляет сообщение в Telegram (синхронно)"""
         global chat_id
         if chat_id is None:
+            logger.warning("Chat ID не установлен. Отправьте боту любое сообщение.")
             print("Chat ID не установлен. Отправьте боту любое сообщение.")
             return
         try:
@@ -123,14 +160,20 @@ class TradingBot:
             }
             response = requests.post(url, json=data, timeout=10)
             if response.status_code == 200:
+                logger.info(f"📤 Сообщение отправлено: {text[:50]}...")
                 print(f"Сообщение отправлено: {text[:50]}...")
             else:
-                print(f"Ошибка отправки: {response.status_code} - {response.text}")
+                error_msg = f"Ошибка отправки: {response.status_code} - {response.text}"
+                logger.error(error_msg)
+                print(error_msg)
         except Exception as e:
-            print(f"Ошибка отправки: {e}")
+            error_msg = f"Ошибка отправки: {e}"
+            logger.error(error_msg)
+            print(error_msg)
     
     def hourly_analysis_sync(self):
         """Выполняет анализ (синхронно)"""
+        logger.info("🔍 Начинаю выполнение анализа...")
         print("Выполняю анализ...")
         
         # Получаем данные
@@ -160,6 +203,7 @@ class TradingBot:
         while scheduler_running:
             time.sleep(ANALYSIS_INTERVAL_SECONDS)
             if scheduler_running and chat_id is not None:
+                logger.info("⏰ Выполняю плановый анализ...")
                 print("⏰ Выполняю плановый анализ...")
                 self.hourly_analysis_sync()
     
@@ -171,6 +215,7 @@ class TradingBot:
             scheduler_thread = threading.Thread(target=self.scheduler_thread, daemon=True)
             scheduler_thread.start()
             interval_text = format_interval(ANALYSIS_INTERVAL_SECONDS)
+            logger.info(f"⏰ Планировщик запущен ({interval_text})")
             print(f"⏰ Планировщик запущен ({interval_text})")
     
     def stop_scheduler(self):

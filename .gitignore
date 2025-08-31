@@ -5,6 +5,7 @@
 
 # Bot data
 chat_id.txt
+*.log
 
 # Python
 __pycache__/

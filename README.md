@@ -17,6 +17,7 @@ TELEGRAM_TOKEN=ВАШ_TELEGRAM_BOT_TOKEN
 # ProxyAPI
 PROXYAPI_KEY=ВАШ_PROXYAPI_KEY
 PROXYAPI_URL=https://api.proxyapi.ru/openai/v1/chat/completions
+AI_MODEL=gpt-3.5-turbo
 
 # Crypto API
 CRYPTO_API_URL=https://api.coingecko.com/api/v3/simple/price
@@ -60,9 +61,10 @@ python working_bot.py
 ## Что делает бот
 
 - Каждый час получает данные о Bitcoin, Ethereum и Cardano
-- Анализирует данные с помощью ProxyAPI (GPT-3.5)
+- Анализирует данные с помощью ProxyAPI (настраиваемая модель ИИ)
 - Отправляет результаты в Telegram с анализом
 - Автоматически восстанавливает состояние после перезапуска
+- Ведет подробные логи всех операций
 
 ## Команды бота
 
@@ -74,4 +76,14 @@ python working_bot.py
 
 В `.env` файле можно изменить:
 - `CRYPTO_IDS` - список криптовалют для анализа
-- `PROXYAPI_KEY` - ключ API (уже настроен) 
+- `AI_MODEL` - модель ИИ для анализа (по умолчанию: gpt-3.5-turbo)
+- `PROXYAPI_KEY` - ключ API (уже настроен)
+
+## Логирование
+
+Бот создает лог-файлы в формате `trading_bot_YYYYMMDD.log` с подробной информацией о:
+- Запуске и остановке бота
+- Получении данных криптовалют
+- Анализе ИИ
+- Отправке сообщений
+- Ошибках и предупреждениях 
