@@ -22,8 +22,22 @@ chat_id = None
 CHAT_ID_FILE = "chat_id.txt"  # Файл для сохранения Chat ID
 
 # Настройки бота
-ANALYSIS_INTERVAL_SECONDS = 20  # 1 час = 3600 секунд
+ANALYSIS_INTERVAL_SECONDS = 3600  # 1 час = 3600 секунд
 scheduler_running = False
+
+def format_interval(seconds):
+    """Форматирует интервал в читаемый вид"""
+    if seconds < 60:
+        return f"каждые {seconds} секунд"
+    elif seconds < 3600:
+        minutes = seconds // 60
+        return f"каждые {minutes} минут"
+    elif seconds < 86400:
+        hours = seconds // 3600
+        return f"каждый {hours} час" if hours == 1 else f"каждые {hours} часа"
+    else:
+        days = seconds // 86400
+        return f"каждый {days} день" if days == 1 else f"каждые {days} дня"
 
 class TradingBot:
     def __init__(self):
@@ -156,7 +170,8 @@ class TradingBot:
             scheduler_running = True
             scheduler_thread = threading.Thread(target=self.scheduler_thread, daemon=True)
             scheduler_thread.start()
-            print("⏰ Планировщик запущен (каждый час)")
+            interval_text = format_interval(ANALYSIS_INTERVAL_SECONDS)
+            print(f"⏰ Планировщик запущен ({interval_text})")
     
     def stop_scheduler(self):
         """Останавливает планировщик"""
@@ -206,14 +221,15 @@ class TradingBot:
         global chat_id
         chat_id = update.effective_chat.id
         self.save_chat_id(chat_id)
-        welcome_message = """
+        interval_text = format_interval(ANALYSIS_INTERVAL_SECONDS)
+        welcome_message = f"""
 🤖 Добро пожаловать в Trading Bot!
 
-Я анализирую криптовалюты и отправляю результаты каждый час.
+Я анализирую криптовалюты и отправляю результаты {interval_text}.
 
 📊 Сейчас анализирую: Bitcoin, Ethereum, Cardano
 🤖 Анализ: через ProxyAPI (GPT-3.5)
-⏰ Отправка: каждый час
+⏰ Отправка: {interval_text}
 
 Команды:
 /start - показать это сообщение
@@ -247,7 +263,8 @@ class TradingBot:
         if chat_id is None:
             chat_id = update.effective_chat.id
             self.save_chat_id(chat_id)
-            await update.message.reply_text("✅ Бот активирован! Анализ будет отправляться каждый час.")
+            interval_text = format_interval(ANALYSIS_INTERVAL_SECONDS)
+            await update.message.reply_text(f"✅ Бот активирован! Анализ будет отправляться {interval_text}.")
             print(f"Бот активирован для Chat ID: {chat_id}")
             # Запускаем планировщик
             self.start_scheduler()
@@ -268,7 +285,8 @@ def main():
     print(f"🔗 Ссылка: https://t.me/tradeAiiiBot")
     if chat_id is not None:
         print(f"✅ Бот уже активирован для Chat ID: {chat_id}")
-        print("📊 Анализ будет выполняться каждый час автоматически")
+        interval_text = format_interval(ANALYSIS_INTERVAL_SECONDS)
+        print(f"📊 Анализ будет выполняться {interval_text} автоматически")
         # Запускаем планировщик, если бот уже активирован
         bot.start_scheduler()
     else:
