@@ -97,15 +97,11 @@ class TradingBot:
                 'vs_currencies': 'usd',
                 'include_24hr_change': 'true'
             }
-            logger.info(f"📊 Запрашиваю данные для: {', '.join(CRYPTO_IDS)}")
             response = requests.get(CRYPTO_API_URL, params=params)
             data = response.json()
-            logger.info("📊 Данные криптовалют получены успешно")
             return data
         except Exception as e:
-            error_msg = f"Ошибка получения данных: {e}"
-            logger.error(error_msg)
-            return error_msg
+            return f"Ошибка получения данных: {e}"
 
     def analyze_with_proxyapi(self, data):
         """Анализирует данные с помощью ProxyAPI"""
@@ -130,22 +126,17 @@ class TradingBot:
                 "max_tokens": 200
             }
 
-            logger.info(f"🤖 Отправляю запрос к ИИ (модель: {AI_MODEL})")
             response = requests.post(PROXYAPI_URL, headers=headers, json=payload)
             result = response.json()
             analysis = result.get('choices', [{}])[0].get('message', {}).get('content', 'Ошибка анализа')
-            logger.info("🤖 Анализ ИИ получен успешно")
             return analysis
         except Exception as e:
-            error_msg = f"Ошибка анализа: {e}"
-            logger.error(error_msg)
-            return error_msg
+            return f"Ошибка анализа: {e}"
 
     def send_message_sync(self, text):
         """Отправляет сообщение в Telegram (синхронно)"""
         global chat_id
         if chat_id is None:
-            logger.warning("Chat ID не установлен. Отправьте боту любое сообщение.")
             print("Chat ID не установлен. Отправьте боту любое сообщение.")
             return
         try:
@@ -158,20 +149,14 @@ class TradingBot:
             }
             response = requests.post(url, json=data, timeout=10)
             if response.status_code == 200:
-                logger.info(f"📤 Сообщение отправлено: {text[:50]}...")
                 print(f"Сообщение отправлено: {text[:50]}...")
             else:
-                error_msg = f"Ошибка отправки: {response.status_code} - {response.text}"
-                logger.error(error_msg)
-                print(error_msg)
+                print(f"Ошибка отправки: {response.status_code} - {response.text}")
         except Exception as e:
-            error_msg = f"Ошибка отправки: {e}"
-            logger.error(error_msg)
-            print(error_msg)
+            print(f"Ошибка отправки: {e}")
 
     def hourly_analysis_sync(self):
         """Выполняет анализ (синхронно)"""
-        logger.info("🔍 Начинаю выполнение анализа...")
         print("Выполняю анализ...")
 
         # Получаем данные
@@ -201,7 +186,6 @@ class TradingBot:
         while scheduler_running:
             time.sleep(ANALYSIS_INTERVAL_SECONDS)
             if scheduler_running and chat_id is not None:
-                logger.info("⏰ Выполняю плановый анализ...")
                 print("⏰ Выполняю плановый анализ...")
                 self.hourly_analysis_sync()
 
@@ -213,7 +197,6 @@ class TradingBot:
             scheduler_thread = threading.Thread(target=self.scheduler_thread, daemon=True)
             scheduler_thread.start()
             interval_text = format_interval(ANALYSIS_INTERVAL_SECONDS)
-            logger.info(f"⏰ Планировщик запущен ({interval_text})")
             print(f"⏰ Планировщик запущен ({interval_text})")
 
     def stop_scheduler(self):
@@ -325,20 +308,9 @@ def main():
     bot.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot.handle_message))
 
     print("🤖 Trading Bot запущен!")
-    print(f"📱 Имя бота: tradeAiiiBot")
-    print(f"🔗 Ссылка: https://t.me/tradeAiiiBot")
+    print("📱 Отправьте боту /start или любое сообщение для активации")
     if chat_id is not None:
-        print(f"✅ Бот уже активирован для Chat ID: {chat_id}")
-        interval_text = format_interval(ANALYSIS_INTERVAL_SECONDS)
-        print(f"📊 Анализ будет выполняться {interval_text} автоматически")
-        # Запускаем планировщик, если бот уже активирован
         bot.start_scheduler()
-    else:
-        print("📱 Отправьте боту /start или любое сообщение для активации")
-    print("📊 Используйте /analyze для получения анализа")
-
-    # Запускаем бота
-    print("🔄 Запускаю polling...")
     bot.app.run_polling()
 
 
