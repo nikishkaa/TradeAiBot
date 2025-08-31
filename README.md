@@ -12,10 +12,10 @@ pip install -r requirements.txt
 2. Создайте файл `.env` в корне проекта со следующим содержимым:
 ```env
 # Telegram Bot
-TELEGRAM_TOKEN=8220591320:AAGT7xl_ltX1EtuH8czTGe539kj4XTaIxRE
+TELEGRAM_TOKEN=ВАШ_TELEGRAM_BOT_TOKEN
 
 # ProxyAPI
-PROXYAPI_KEY=sk-lMWaJW9HSgezZqT2oLD2X1s2NuZs75WJ
+PROXYAPI_KEY=ВАШ_PROXYAPI_KEY
 PROXYAPI_URL=https://api.proxyapi.ru/openai/v1/chat/completions
 
 # Crypto API
@@ -24,6 +24,17 @@ CRYPTO_IDS=bitcoin,ethereum,cardano
 ```
 
 > ⚠️ **Важно**: Файл `.env` уже добавлен в `.gitignore` и не будет загружен в Git репозиторий для безопасности.
+
+### Как получить токены:
+
+1. **Telegram Bot Token**:
+   - Напишите @BotFather в Telegram
+   - Создайте нового бота командой `/newbot`
+   - Получите токен и замените `ВАШ_TELEGRAM_BOT_TOKEN`
+
+2. **ProxyAPI Key**:
+   - Зарегистрируйтесь на [proxyapi.ru](https://proxyapi.ru)
+   - Получите API ключ и замените `ВАШ_PROXYAPI_KEY`
 
 3. Настройте конфигурацию:
    - Chat ID будет получен автоматически при первом сообщении
