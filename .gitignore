@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# Bot data
+chat_id.txt
+
 # Python
 __pycache__/
 *.py[cod]

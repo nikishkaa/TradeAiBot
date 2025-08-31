@@ -54,7 +54,7 @@ CRYPTO_IDS=bitcoin,ethereum,cardano
 ## Запуск
 
 ```bash
-python trading_bot.py
+python working_bot.py
 ```
 
 ## Что делает бот
@@ -62,6 +62,7 @@ python trading_bot.py
 - Каждый час получает данные о Bitcoin, Ethereum и Cardano
 - Анализирует данные с помощью ProxyAPI (GPT-3.5)
 - Отправляет результаты в Telegram с анализом
+- Автоматически восстанавливает состояние после перезапуска
 
 ## Команды бота
 
