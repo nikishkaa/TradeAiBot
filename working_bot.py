@@ -100,17 +100,18 @@ class TradingBot:
             print("Chat ID не установлен. Отправьте боту любое сообщение.")
             return
         try:
-            # Создаем новый event loop для отправки
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-            async def send():
-                await self.bot.send_message(chat_id=chat_id, text=text)
-            
-            loop.run_until_complete(send())
-            loop.close()
-            print(f"Сообщение отправлено: {text[:50]}...")
+            # Используем requests для отправки сообщения напрямую
+            url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+            data = {
+                "chat_id": chat_id,
+                "text": text,
+                "parse_mode": "HTML"
+            }
+            response = requests.post(url, json=data, timeout=10)
+            if response.status_code == 200:
+                print(f"Сообщение отправлено: {text[:50]}...")
+            else:
+                print(f"Ошибка отправки: {response.status_code} - {response.text}")
         except Exception as e:
             print(f"Ошибка отправки: {e}")
     
