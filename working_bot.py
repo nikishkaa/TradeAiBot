@@ -25,7 +25,7 @@ chat_id = None
 CHAT_ID_FILE = "chat_id.txt"  # Файл для сохранения Chat ID
 
 # Настройки бота
-ANALYSIS_INTERVAL_SECONDS = 20
+ANALYSIS_INTERVAL_SECONDS = 3600
 scheduler_running = False
 
 # Настройка логирования
