@@ -25,7 +25,7 @@ chat_id = None
 CHAT_ID_FILE = "chat_id.txt"  # Файл для сохранения Chat ID
 
 # Настройки бота
-ANALYSIS_INTERVAL_SECONDS = 3600
+ANALYSIS_INTERVAL_SECONDS = 20
 scheduler_running = False
 
 # Настройка логирования
@@ -49,16 +49,13 @@ logger = setup_logging()
 def format_interval(seconds):
     """Форматирует интервал в читаемый вид"""
     if seconds < 60:
-        return f"каждые {seconds} секунд"
+        return f"каждые {seconds} сек"
     elif seconds < 3600:
-        minutes = seconds // 60
-        return f"каждые {minutes} минут"
+        return f"каждые {seconds // 60} мин"
     elif seconds < 86400:
-        hours = seconds // 3600
-        return f"каждый {hours} час" if hours == 1 else f"каждые {hours} часа"
+        return f"каждый {seconds // 3600} час"
     else:
-        days = seconds // 86400
-        return f"каждый {days} день" if days == 1 else f"каждые {days} дня"
+        return f"каждый {seconds // 86400} день"
 
 
 class TradingBot:
@@ -310,7 +307,7 @@ def main():
     print("🤖 Trading Bot запущен!")
     print("📱 Отправьте боту /start или любое сообщение для активации")
     if chat_id is not None:
-        bot.start_scheduler()
+     bot.start_scheduler()
     bot.app.run_polling()
 
 
