@@ -25,7 +25,7 @@ active_chats = {}
 CHAT_ID_FILE = "active_chats.json"  # Файл для сохранения активных чатов
 
 # Настройки бота
-ANALYSIS_INTERVAL_SECONDS = 3600
+ANALYSIS_INTERVAL_SECONDS = 20
 scheduler_running = False
 
 # Настройка логирования
@@ -60,7 +60,7 @@ class TradingBot:
         self.bot = Bot(token=TELEGRAM_TOKEN)
         self.app = Application.builder().token(TELEGRAM_TOKEN).build()
         self.load_active_chats()
-    
+
     def load_active_chats(self):
         """Загружает активные чаты из файла"""
         global active_chats
@@ -72,7 +72,7 @@ class TradingBot:
         except Exception as e:
             logger.error(f"Ошибка загрузки активных чатов: {e}")
             print(f"Ошибка загрузки активных чатов: {e}")
-    
+
     def save_active_chats(self):
         """Сохраняет активные чаты в файл"""
         try:
@@ -82,7 +82,7 @@ class TradingBot:
         except Exception as e:
             logger.error(f"Ошибка сохранения активных чатов: {e}")
             print(f"Ошибка сохранения активных чатов: {e}")
-    
+
     def add_chat(self, chat_id, username=None):
         """Добавляет чат в список активных"""
         global active_chats
@@ -92,7 +92,7 @@ class TradingBot:
         }
         self.save_active_chats()
         print(f"✅ Добавлен чат: {chat_id} (@{username})")
-    
+
     def remove_chat(self, chat_id):
         """Удаляет чат из списка активных"""
         global active_chats
@@ -100,7 +100,7 @@ class TradingBot:
             del active_chats[str(chat_id)]
             self.save_active_chats()
             print(f"❌ Удален чат: {chat_id}")
-    
+
     def get_crypto_data(self):
         """Получает данные о криптовалютах"""
         try:
@@ -172,7 +172,7 @@ class TradingBot:
         if not active_chats:
             print("📭 Нет активных чатов для отправки анализа")
             return
-        
+
         print(f"🔍 Выполняю анализ для {len(active_chats)} чатов...")
 
         # Получаем данные
@@ -262,7 +262,7 @@ class TradingBot:
         """Обработчик команды /start"""
         chat_id = update.effective_chat.id
         username = update.effective_user.username
-        
+
         self.add_chat(chat_id, username)
         interval_text = format_interval(ANALYSIS_INTERVAL_SECONDS)
         welcome_message = f"""
@@ -284,12 +284,12 @@ class TradingBot:
         """
         await update.message.reply_text(welcome_message)
         print(f"✅ Бот активирован для чата: {chat_id} (@{username})")
-    
+
     async def status_command(self, update: Update, context):
         """Обработчик команды /status"""
         global active_chats, scheduler_running
         chat_id = update.effective_chat.id
-        
+
         if str(chat_id) not in active_chats:
             await update.message.reply_text("❌ Бот не активирован. Отправьте /start")
         else:
@@ -301,17 +301,17 @@ class TradingBot:
                 f"Всего активных чатов: {total_chats}\n"
                 f"Планировщик: {status}"
             )
-    
+
     async def analyze_command(self, update: Update, context):
         """Обработчик команды /analyze"""
         chat_id = update.effective_chat.id
         if str(chat_id) not in active_chats:
             await update.message.reply_text("❌ Бот не активирован. Отправьте /start")
             return
-        
+
         await update.message.reply_text("🔍 Выполняю анализ...")
         await self.hourly_analysis(chat_id)
-    
+
     async def stop_command(self, update: Update, context):
         """Обработчик команды /stop"""
         chat_id = update.effective_chat.id
@@ -320,12 +320,12 @@ class TradingBot:
             await update.message.reply_text("❌ Вы отписались от уведомлений")
         else:
             await update.message.reply_text("❌ Вы не были подписаны на уведомления")
-    
+
     async def handle_message(self, update: Update, context):
         """Обработчик всех сообщений"""
         chat_id = update.effective_chat.id
         username = update.effective_user.username
-        
+
         if str(chat_id) not in active_chats:
             self.add_chat(chat_id, username)
             interval_text = format_interval(ANALYSIS_INTERVAL_SECONDS)
@@ -334,24 +334,47 @@ class TradingBot:
         else:
             await update.message.reply_text("🤖 Бот уже активен. Используйте /analyze для анализа.")
 
+
+def setup_bot_commands():
+    """Устанавливает список команд для бота"""
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setMyCommands"
+        commands = [
+            {"command": "start", "description": "🚀 Запустить бота и подписаться на уведомления"},
+            {"command": "status", "description": "📊 Показать статус бота и количество пользователей"},
+            {"command": "analyze", "description": "🔍 Выполнить анализ криптовалют сейчас"},
+            {"command": "stop", "description": "❌ Отписаться от уведомлений"}
+        ]
+        data = {"commands": commands}
+        response = requests.post(url, json=data, timeout=10)
+        if response.status_code == 200:
+            print("✅ Команды бота установлены")
+        else:
+            print(f"❌ Ошибка установки команд: {response.status_code}")
+    except Exception as e:
+        print(f"❌ Ошибка установки команд: {e}")
+
 def main():
+    # Устанавливаем команды бота
+    setup_bot_commands()
     bot = TradingBot()
-    
+
     # Регистрируем обработчики
     bot.app.add_handler(CommandHandler("start", bot.start_command))
     bot.app.add_handler(CommandHandler("status", bot.status_command))
     bot.app.add_handler(CommandHandler("analyze", bot.analyze_command))
     bot.app.add_handler(CommandHandler("stop", bot.stop_command))
     bot.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot.handle_message))
-    
+
     print("🤖 Trading Bot запущен!")
     if active_chats:
         print(f"✅ Загружено {len(active_chats)} активных чатов")
         bot.start_scheduler()
     else:
         print("📱 Отправьте боту /start или любое сообщение для активации")
-    
+
     bot.app.run_polling()
+
 
 if __name__ == "__main__":
     main()
