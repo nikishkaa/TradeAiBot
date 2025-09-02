@@ -25,7 +25,7 @@ active_chats = {}
 CHAT_ID_FILE = "active_chats.json"  # Файл для сохранения активных чатов
 
 # Настройки бота
-ANALYSIS_INTERVAL_SECONDS = 20
+ANALYSIS_INTERVAL_SECONDS = 3600
 scheduler_running = False
 
 # Настройка логирования
